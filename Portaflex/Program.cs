@@ -34,8 +34,7 @@ namespace Portaflex
             }
         }
 
-        public static void Application_ThreadException
-            (object sender, System.Threading.ThreadExceptionEventArgs e)
+        public static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
             var result = DialogResult.Abort;
             try

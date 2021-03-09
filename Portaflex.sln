@@ -7,6 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portaflex", "Portaflex\Port
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "PortaflexSetup", "PortaflexSetup\PortaflexSetup.vdproj", "{4FB66472-B2BB-4F71-AAFB-026A9A5CC3F5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{6BF78C33-3DF9-44B1-A975-64314A1B1F26}"
+	ProjectSection(SolutionItems) = preProject
+		Portaflex.sln.DotSettings = Portaflex.sln.DotSettings
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,7 +49,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		VisualSVNWorkingCopyRoot = .
 		SolutionGuid = {B137193B-161E-46E9-833E-2954DE5CBDA8}
+		VisualSVNWorkingCopyRoot = .
 	EndGlobalSection
 EndGlobal
