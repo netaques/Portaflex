@@ -1,0 +1,565 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using Portaflex.Data;
+using System.Reflection;
+
+namespace Portaflex
+{
+    public partial class TotalPage : UserControl
+    {
+        private Total total;
+        private const int PERM_COLS = 4;
+        private int selectedColumnIndex = -1;
+        private int selectedRowIndex = -1;
+
+        #region Life
+        public TotalPage(Total total)
+        {
+            InitializeComponent();
+            typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null,
+            dataGridView1, new object[] { true });
+            InitializeData(total);
+        }
+
+        private void InitializeData(Total total)
+        {
+            this.total = total;
+            total.BudgetChanged += new BudgetChangedHandler(total_BudgetChanged);
+            total.Departments.ListChanged += new ListChangedEventHandler(Departments_ListChanged);
+            total.Budgets.ListChanged += new ListChangedEventHandler(Budgets_ListChanged);
+            total.DirChanged += new EventHandler(total_DirChanged);
+
+            if (total.Dir != null)
+            {
+                dataGridView1.Columns[PERM_COLS - 1].Visible = true;
+                total.Dir.Values.ListChanged += new ListChangedEventHandler(DirValues_ListChanged);
+            }
+
+            foreach (Department dep in total.Departments)
+            {
+                // vytvorime sloupec pro oddeleni
+                string header = createDepHeader(dep);
+                dep.DepartmentChanged += new DepartmentChangedHandler(d_DepartmentChanged);
+                DataGridViewTextBoxColumn col = new DataGridViewTextBoxColumn();
+                col.HeaderText = header;
+                col.ReadOnly = true;
+                dataGridView1.Columns.Add(col);
+            }
+
+            foreach (Budget b in total.Budgets)
+            {
+                int i = total.Budgets.IndexOf(b);
+                double sum = 0;
+                DataGridViewRow row = fillRowWithData(b);
+                foreach (Department dep in total.Departments)
+                {
+                    DataGridViewTextBoxCell newcell = new DataGridViewTextBoxCell();
+                    double depSum = sumDep(dep,i);
+                    sum += depSum;
+                    newcell.Value = depSum;
+                    row.Cells.Add(newcell);
+                }
+                if (total.Dir != null)
+                    sum += total.Dir.Values[i];
+
+                row.Cells[2].Value = sum;
+                dataGridView1.Rows.Add(row);
+
+                if (b.Sum)
+                {
+                    DataGridViewCellStyle s = new DataGridViewCellStyle();
+                    s.Font = new Font(DefaultFont, FontStyle.Bold);
+                    dataGridView1.Rows[dataGridView1.Rows.Count - 1].DefaultCellStyle = s;
+
+                    for (int col = 2; col < dataGridView1.ColumnCount; col++)
+                    {
+                        dataGridView1.Rows[dataGridView1.Rows.Count - 1].Cells[col].ReadOnly = true;
+                        calcSum(i, col);
+                    }
+                }
+
+                if (b.Income)
+                    row.DefaultCellStyle.BackColor = Color.LightGreen;
+            }
+            createTotalRow();
+            updateStats();
+        }
+        #endregion
+
+        #region Data event handlers
+
+        private void total_DirChanged(object sender, EventArgs e)
+        {
+            bool hasDir = total.Dir != null;
+            dataGridView1.Columns[PERM_COLS - 1].Visible = hasDir;
+            newDirButton.Enabled = !hasDir;
+            if (hasDir)
+            {
+                int i = 0;
+                foreach (Budget b in total.Budgets)
+                    dataGridView1.Rows[i++].Cells[PERM_COLS - 1].Value = 0;
+                total.Dir.Values.ListChanged += new ListChangedEventHandler(DirValues_ListChanged);
+            }
+            else
+            {
+                int i = 0;
+                foreach (Budget b in total.Budgets)
+                    dataGridView1.Rows[i++].Cells[PERM_COLS - 1].Value = 0;       
+            }
+        }
+
+        private void DirValues_ListChanged(object sender, ListChangedEventArgs e)
+        {
+            if (e.ListChangedType == ListChangedType.ItemChanged)
+            {
+                int row = e.NewIndex, i = 1;
+                dataGridView1.Rows[row].Cells[3].Value = total.Dir.Values[row];
+                calcSum(row, 3);
+                dataGridView1.Rows[row].Cells[2].Value = sumRow(row);
+                calcSum(row, 2);
+                foreach (Department d in total.Departments)
+                {
+                    dataGridView1.Rows[row].Cells[i + 3].Value = sumDep(d, row);
+                    calcSum(row, i + 3);
+                    i++;
+                }
+            }
+        }
+
+        private void Budgets_ListChanged(object sender, ListChangedEventArgs e)
+        {
+            if (e.ListChangedType == ListChangedType.ItemAdded)
+            {
+                Budget b = total.Budgets[e.NewIndex];
+                dataGridView1.Rows.Insert(dataGridView1.Rows.Count - 1, createNewRow(b.Name, b.ID));
+                
+                //dataGridView1.Rows.Add(createNewRow(b.Name, b.ID));
+                 
+                if (b.Sum)
+                {
+                    DataGridViewCellStyle s = new DataGridViewCellStyle();
+                    s.Font = new Font(DefaultFont, FontStyle.Bold);
+                    dataGridView1.Rows[dataGridView1.Rows.Count - 2].DefaultCellStyle = s;
+
+                    for (int col = 2; col < dataGridView1.ColumnCount; col++)
+                    {
+                        dataGridView1.Rows[dataGridView1.Rows.Count - 2].Cells[col].ReadOnly = true;                        
+                        calcSum(e.NewIndex, col);
+                    }                    
+                }
+
+                if (b.Income)
+                    dataGridView1.Rows[dataGridView1.Rows.Count - 2].DefaultCellStyle.BackColor = Color.LightGreen;                
+            }
+            else if (e.ListChangedType == ListChangedType.ItemDeleted)
+            {
+                dataGridView1.Rows.RemoveAt(e.NewIndex);
+                for (int i = 2; i < dataGridView1.ColumnCount; i++)
+                {
+                    calcSum(e.NewIndex, i);
+                }
+                updateStats();
+            }
+        }
+
+        private void Departments_ListChanged(object sender, ListChangedEventArgs e)
+        {
+            if (e.ListChangedType == ListChangedType.ItemAdded)
+            {
+                Department d = total.Departments[e.NewIndex];
+                d.DepartmentChanged += new DepartmentChangedHandler(d_DepartmentChanged);
+                dataGridView1.Columns.Add(d.Name, createDepHeader(d));
+                dataGridView1.Columns[e.NewIndex + PERM_COLS].ReadOnly = true;
+                for (int i = 0; i < dataGridView1.Rows.Count - 1; i++)
+                {
+                    dataGridView1.Rows[i].Cells[dataGridView1.Columns.Count - 1].Value = sumDep(d, i);
+                }
+            }
+            else if (e.ListChangedType == ListChangedType.ItemDeleted)
+            {
+                dataGridView1.Columns.RemoveAt(e.NewIndex + PERM_COLS);
+            }
+            updateStats();
+        }
+
+        private void d_DepartmentChanged(object sender, DepartmentChangeEventArgs e)
+        {
+            Department dep = (Department) sender;
+            int index = total.Departments.IndexOf(dep);
+            if (e.Type == DepartmentChangeTypes.Name || e.Type == DepartmentChangeTypes.Proc)
+            {                
+                dataGridView1.Columns[index + PERM_COLS].Name = createDepHeader(dep);
+                dataGridView1.Columns[index + PERM_COLS].HeaderText = createDepHeader(dep);
+                if (e.Type == DepartmentChangeTypes.Proc)
+                {
+                    int i = 0;
+                    foreach (Budget b in total.Budgets)
+                    {
+                        dataGridView1.Rows[i].Cells[index + PERM_COLS].Value = sumDep(dep, i);
+                        if (b.Sum)
+                            calcSum(i, index + PERM_COLS);
+                        i++;
+                    }
+                }
+            }
+            else if (e.Type == DepartmentChangeTypes.Value)
+            {
+                int row = e.AffectedValueIndex;
+                dataGridView1.Rows[row].Cells[2].Value = sumRow(row);
+                calcSum(row, 2);
+                dataGridView1.Rows[row].Cells[index + PERM_COLS].Value = sumDep(dep,row);
+                calcSum(row, index + PERM_COLS);
+
+            }
+            else if (e.Type == DepartmentChangeTypes.Dir)
+            {
+                int i = 0;
+                foreach (Budget b in total.Budgets)
+                {
+                    dataGridView1.Rows[i].Cells[2].Value = sumRow(i);
+                    dataGridView1.Rows[i].Cells[index + PERM_COLS].Value = dep.TotalSum(i);
+                    i++;
+                }
+            }
+        }
+
+        private void total_BudgetChanged(object sender, BudgetEventArgs e)
+        {
+            int index = e.Index;
+            if (index < 0 || index >= dataGridView1.RowCount)
+            {
+                dataGridView1.Rows.Add(createNewRow(Texts.Budget, Texts.Id));
+                index = index < 0 ? 0 : index;
+            }
+            dataGridView1.Rows[index].Cells[1].Value = ((Budget)sender).Name;
+            dataGridView1.Rows[index].Cells[0].Value = ((Budget)sender).ID;
+            if (((Budget)sender).Income)
+                dataGridView1.Rows[index].DefaultCellStyle.BackColor = Color.LightGreen;
+            else
+                dataGridView1.Rows[index].DefaultCellStyle.BackColor = Color.FromArgb(255,255,192);
+            if (e.Type == "income")
+                updateStats();
+        }
+
+        #endregion
+
+        #region UI event handlers
+
+        private void sumButton_Click(object sender, EventArgs e)
+        {
+            total.Budgets.Add(new Budget(Texts.Sum, Texts.Id, true));    
+        }
+
+        private void newAcountButton_Click(object sender, EventArgs e)
+        {
+            total.Budgets.Add(new Budget(Texts.Budget, Texts.Id));
+        }
+
+        private void newDepButton_Click(object sender, EventArgs e)
+        {
+            Department d = new Department(total);
+            DepartmentProperties prop = new DepartmentProperties(ref d, true, "Nové středisko");
+            if (prop.ShowDialog() != DialogResult.OK)
+                return;
+            d.Locked = false;
+            total.Departments.Add(d);
+        }
+
+        private void newDirButton_Click(object sender, EventArgs e)
+        {
+            total.Dir = new Directing();
+            newDirButton.Enabled = false;
+        }
+
+        private void dataGridView1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                DataGridView.HitTestInfo hinfo = dataGridView1.HitTest(e.X, e.Y);
+                if (hinfo.Type == DataGridViewHitTestType.ColumnHeader && hinfo.ColumnIndex == 3 && total.Dir != null)
+                {
+                    selectedColumnIndex = hinfo.ColumnIndex;
+                    columnContextMenu.Show(dataGridView1, new Point(e.X, e.Y));
+                }
+                else if (hinfo.Type == DataGridViewHitTestType.RowHeader)
+                {
+                    selectedRowIndex = hinfo.RowIndex;
+                    dataGridView1.Rows[selectedRowIndex].Selected = true;
+                    if (selectedRowIndex == dataGridView1.RowCount - 1)
+                        return;
+                    if (total.Budgets[selectedRowIndex].Income)
+                        incomeToolStripMenuItem.Text = Texts.Expense;
+                    else
+                        incomeToolStripMenuItem.Text = Texts.Income;
+                    rowContextMenu.Show(dataGridView1, new Point(e.X, e.Y));
+                }
+            }
+        }
+
+        // Smaze radek uctu
+        private void smazatToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (selectedRowIndex != -1)
+            {
+                List<int> list = new List<int>();
+                for (int i = 0; i < dataGridView1.SelectedRows.Count; i++)
+                    list.Add(dataGridView1.SelectedRows[i].Index);
+                foreach(int i in list)
+                    total.Budgets.RemoveAt(i);
+                selectedRowIndex = -1;
+            }     
+        }
+
+        //nastavi prijem/vydaj
+        private void incomeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (selectedRowIndex != -1)
+            {
+                bool income = !total.Budgets[selectedRowIndex].Income;
+                if(total.Budgets[selectedRowIndex].Sum)
+                {
+                    total.Budgets[selectedRowIndex].Income = income;
+                    for (int i = selectedRowIndex - 1; i >= 0 && !total.Budgets[i].Sum; i--)
+                        total.Budgets[i].Income = income;
+                }
+                for (int i = 0; i < dataGridView1.SelectedRows.Count; i++)
+                    total.Budgets[dataGridView1.SelectedRows[i].Index].Income = income;
+                selectedRowIndex = -1;
+            }
+        }
+
+        //smaze rezii
+        private void smazatToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            total.Dir = null;
+            newDirButton.Enabled = true;
+        }
+
+        private void dataGridView1_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            updateData(e.ColumnIndex, e.RowIndex);
+        }
+        #endregion
+
+        #region Private helpers
+
+        private void createTotalRow()
+        {
+            dataGridView1.Rows.Add(createNewRow("CELKEM", ""));
+            DataGridViewRow row = dataGridView1.Rows[dataGridView1.RowCount - 1];
+            row.ReadOnly = true;
+            DataGridViewCellStyle s = new DataGridViewCellStyle();
+            s.Font = new Font(DefaultFont.FontFamily, 10, FontStyle.Bold);
+            s.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            s.BackColor = Color.Gold ;//Color.FromArgb(255, 255, 192);
+            s.Padding = new System.Windows.Forms.Padding(3);
+            dataGridView1.Rows[dataGridView1.Rows.Count - 1].DefaultCellStyle = s;
+        }
+
+        private double calcObrat()
+        {
+            double sum = 0;
+            int i = 0;
+            foreach (Budget b in total.Budgets)
+            {
+                if (b.Income)
+                    sum += sumRow(i);
+                i++;
+            }
+
+            return sum;
+        }
+                    
+        private double calcVysledek()
+        {
+            double sum = calcObrat();
+            int i = 0;
+            foreach (Budget b in total.Budgets)
+            {
+                if (!b.Income && !b.Sum)
+                    sum -= sumRow(i);
+                i++;
+            }
+            return sum;
+        }
+
+        /// <summary>
+        /// Spocte sumu pro budget sum ktery je nejblizsi zadanemu radku.
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        private void calcSum(int row, int col)
+        {
+            if (row >= total.Budgets.Count || row < 0 || col >= dataGridView1.ColumnCount || col < 0)
+                return;
+            // najdeme nejblizsi nasledujici sum budget
+            int rowSum;
+            if (!total.Budgets[row].Sum)
+            {
+                for (int i = row; i < total.Budgets.Count; i++)
+                {
+                    if (total.Budgets[i].Sum)
+                    {
+                        row = i;
+                        break;
+                    }
+                    // pokud neexistuje zadny nasledujici budget sum -> konec
+                    else if (i + 1 == total.Budgets.Count)
+                        return;
+                }
+            }
+            rowSum = row;
+            double sum = 0;
+            for (row--; row >= 0 && !total.Budgets[row].Sum; row--)
+            {
+                sum += Convert.ToDouble(dataGridView1.Rows[row].Cells[col].Value);
+            }
+            dataGridView1.Rows[rowSum].Cells[col].Value = sum;
+        }
+
+        /// <summary>
+        /// Vytvori retezec obsahujici jmeno a procenta predaneho oddeleni.
+        /// </summary>
+        /// <param name="d">Oddeleni z nehoz se ma retezec slozit</param>
+        /// <returns>Vysledny string</returns>
+        private string createDepHeader(Department d)
+        {
+            return d.Name + " (" + d.Proc + "%)";
+        }
+
+        /// <summary>
+        /// Vytvori pole stringu pro vlozeni do dataGridView
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        private string[] createNewRow(string name, string id)
+        {
+            string[] s = new string[dataGridView1.Columns.Count];
+            s[0] = id;
+            s[1] = name;
+            s[2] = "0";
+            s[3] = "0";
+            for (int i = PERM_COLS; i < s.Length; i++)
+                s[i] = "0";
+            return s;
+        }
+
+        /// <summary>
+        /// Aktualizuje data na zadanych souradnicich v dataGridView.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        private void updateData(int x, int y)
+        {
+            if (x < 0 || y < 0 || y >= dataGridView1.Rows.Count - 1)
+                return;
+            string value = dataGridView1.Rows[y].Cells[x].Value.ToString();
+            if (x == 1) //name
+            {
+                total.Budgets[y].Name = value;
+            }
+            else if (x == 0) //id            
+            {
+                total.Budgets[y].ID = value;   
+            }
+            else if (x == 3 && total.Dir != null && !total.Budgets[y].Sum) //dir
+            {
+                total.Dir.Values[y] = Convert.ToInt32(value);
+            }
+            if (!total.Budgets[y].Sum)
+            {
+                dataGridView1.Rows[y].Cells[2].Value = sumRow(y);
+                updateStats();
+            }
+        }
+
+        private void updateStats()
+        {
+            obratTextLabel.Text = calcObrat().ToString() + " " + Texts.Curency;
+            vysledekTextLabel.Text = calcVysledek().ToString() + " " + Texts.Curency;
+
+            DataGridViewRow totalRow = dataGridView1.Rows[dataGridView1.RowCount - 1];
+            for (int i = 2; i < dataGridView1.ColumnCount; i++)
+            {
+                totalRow.Cells[i].Value = calcColumn(i);
+            }
+        }
+
+        private double calcColumn(int col)
+        {
+            double sum = 0;
+            for (int i = 0; i < dataGridView1.RowCount - 1; i++)
+            {
+                if (!total.Budgets[i].Sum)
+                {
+                    if (total.Budgets[i].Income)
+                        sum += Convert.ToDouble(dataGridView1.Rows[i].Cells[col].Value);
+                    else
+                        sum -= Convert.ToDouble(dataGridView1.Rows[i].Cells[col].Value);
+                }
+            }
+            return sum;
+        }
+
+        /// <summary>
+        /// Vypocte soucet vsech oddeleni pro dany ucet.
+        /// </summary>
+        /// <param name="row">Index uctu</param>
+        /// <returns>Suma oddeleni</returns>
+        private int sumRow(int row)
+        {
+            int sum = 0;
+            if (total.Dir != null)
+                sum = total.Dir.Values[row];
+            foreach (Department dep in total.Departments)
+            {
+                sum += dep.TotalSum(row);                
+            }
+            return sum;
+        }
+
+        /// <summary>
+        /// Vytvori radek a naplni jej daty z predaneho uctu.
+        /// </summary>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        private DataGridViewRow fillRowWithData(Budget b)
+        {
+            DataGridViewRow row = new DataGridViewRow();
+            DataGridViewTextBoxCell idcell = new DataGridViewTextBoxCell();
+            DataGridViewTextBoxCell namecell = new DataGridViewTextBoxCell();
+            DataGridViewTextBoxCell totalcell = new DataGridViewTextBoxCell();
+            DataGridViewTextBoxCell dircell = new DataGridViewTextBoxCell();
+            idcell.Value = b.ID;
+            namecell.Value = b.Name;
+            totalcell.Value = "0";
+            if(total.Dir != null)
+                dircell.Value = total.Dir.Values[total.Budgets.IndexOf(b)];
+            else
+                dircell.Value = "0";
+            row.Cells.Add(idcell);
+            row.Cells.Add(namecell);
+            row.Cells.Add(totalcell);
+            row.Cells.Add(dircell);
+            return row;
+        }
+
+        private double sumDep(Department d, int row)
+        {
+            double sum = d.TotalSum(row);
+            if (total.Dir != null)
+                sum += (total.Dir != null ? total.Dir.Values[row] * ((double)d.Proc) / 100 : 0);
+
+            return sum;
+        }
+
+        #endregion
+    }
+}
