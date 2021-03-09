@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Portaflex.Data;
 using System.IO;
-using System.Threading;
 
 namespace Portaflex
 {
@@ -28,8 +24,8 @@ namespace Portaflex
             total = new Total();
             this.Icon = Properties.Resources.logo;
             this.Text = Texts.PrgName + " - " + Texts.NewTotal;
-            total.DirChanged += new EventHandler(total_DirChanged);
-            total.Departments.ListChanged += new ListChangedEventHandler(Departments_ListChanged);
+            total.DirChanged += total_DirChanged;
+            total.Departments.ListChanged += Departments_ListChanged;
             createTotalPage();
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.DoubleBuffer, true);
             checkProcentual();
@@ -67,12 +63,12 @@ namespace Portaflex
 
         private void insertPage(int position, TabControl tc, TabPage tp)
         {
-            List<TabPage> list = new List<TabPage>();
-            int i = 0;
+            var list = new List<TabPage>();
+            var i = 0;
             foreach (TabPage p in tc.TabPages)
                 list.Add(p);
             tc.TabPages.Clear();
-            foreach (TabPage p in list)
+            foreach (var p in list)
             {
                 if (i++ == position)
                     tc.TabPages.Add(tp);
@@ -83,7 +79,7 @@ namespace Portaflex
 
         private void createDirPage()
         {
-            DirPage dp = new DirPage(total);
+            var dp = new DirPage(total);
             dp.Dock = DockStyle.Fill;
             dirPage.Controls.Clear();
             dirPage.Controls.Add(dp);
@@ -106,9 +102,9 @@ namespace Portaflex
             }
             else if (e.ListChangedType == ListChangedType.ItemAdded)
             {
-                Department d = total.Departments[e.NewIndex];
+                var d = total.Departments[e.NewIndex];
                 insertTabPage(createTabPage(d));
-                d.DepartmentChanged += new DepartmentChangedHandler(departmentChanged);                
+                d.DepartmentChanged += departmentChanged;                
             }
             checkProcentual();
         }
@@ -117,8 +113,8 @@ namespace Portaflex
         {
             if (tabControl1.SelectedTab == addPage)
             {
-                Department d = new Department(total);                
-                DepartmentProperties prop = new DepartmentProperties(ref d, true, "Nové středisko");
+                var d = new Department(total);                
+                var prop = new DepartmentProperties(ref d, true, "Nové středisko");
                 if (prop.ShowDialog() != DialogResult.OK)
                 {
                     tabControl1.SelectedTab = tabControl1.TabPages[0];
@@ -131,7 +127,7 @@ namespace Portaflex
 
         private void departmentChanged(AbstractDepartment d, DepartmentChangeEventArgs e)
         {
-            TabPage page = tabControl1.TabPages[total.Departments.IndexOf((Department)d) + permPages()];
+            var page = tabControl1.TabPages[total.Departments.IndexOf((Department)d) + permPages()];
             page.Text = d.Name + " (" + d.Proc + "%)";
             if (((Department)d).Locked)
                 page.ImageIndex = 1;
@@ -149,7 +145,7 @@ namespace Portaflex
             if (total.Dir != null)
             {
                 decimal counter = 0;
-                foreach (Department dep in total.Departments)
+                foreach (var dep in total.Departments)
                     counter += dep.Proc;
                 if (counter != 100 && total.Departments.Count > 0)
                 {
@@ -166,7 +162,7 @@ namespace Portaflex
 
         private void tabControl1_MouseClick(object sender, MouseEventArgs e)
         {
-            TabPage selected = tabControl1.SelectedTab;
+            var selected = tabControl1.SelectedTab;
             
             if(selected != addPage && selected != totalPage)
             {
@@ -179,7 +175,7 @@ namespace Portaflex
                     AbstractDepartment dep;
                     if (selected != dirPage)
                     {
-                        int index = tabControl1.TabPages.IndexOf(selected) - permPages();
+                        var index = tabControl1.TabPages.IndexOf(selected) - permPages();
                         dep = total.Departments[index];
                     }
                     else
@@ -189,7 +185,7 @@ namespace Portaflex
                         tabControl1.SelectedTab = totalPage;
                         while (true)
                         {
-                            UnlockForm form = new UnlockForm();
+                            var form = new UnlockForm();
                             if (form.ShowDialog() == DialogResult.OK)
                             {
                                 if (form.Password == dep.Password)
@@ -217,10 +213,10 @@ namespace Portaflex
 
         private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
         {
-            Point p = this.tabControl1.PointToClient(Cursor.Position);
-            for (int i = 0; i < this.tabControl1.TabCount; i++)
+            var p = this.tabControl1.PointToClient(Cursor.Position);
+            for (var i = 0; i < this.tabControl1.TabCount; i++)
             {
-                Rectangle r = this.tabControl1.GetTabRect(i);
+                var r = this.tabControl1.GetTabRect(i);
                 if (r.Contains(p))
                 {
                     this.tabControl1.SelectedIndex = i; // i is the index of tab under cursor
@@ -228,12 +224,12 @@ namespace Portaflex
 
                     if (this.tabControl1.SelectedTab != dirPage)
                     {
-                        ToolStripItem expItem = contextMenuStrip1.Items.Add("Exportovat");
-                        expItem.Click += new EventHandler(expItem_Click);
-                        ToolStripItem propItem = contextMenuStrip1.Items.Add("Vlastnosti");
-                        propItem.Click += new EventHandler(propItem_Click);
-                        ToolStripItem delItem = contextMenuStrip1.Items.Add("Smazat");
-                        delItem.Click += new EventHandler(delItem_Click);
+                        var expItem = contextMenuStrip1.Items.Add("Exportovat");
+                        expItem.Click += expItem_Click;
+                        var propItem = contextMenuStrip1.Items.Add("Vlastnosti");
+                        propItem.Click += propItem_Click;
+                        var delItem = contextMenuStrip1.Items.Add("Smazat");
+                        delItem.Click += delItem_Click;
                     }
                     else
                     {
@@ -243,7 +239,7 @@ namespace Portaflex
                         else
                             lockItem = contextMenuStrip1.Items.Add("Odebrat zámek");
                         
-                        lockItem.Click += new EventHandler(dirLock_Click);
+                        lockItem.Click += dirLock_Click;
                     }
 
                     return;
@@ -258,15 +254,15 @@ namespace Portaflex
                 total.Dir.Password = "";
             else
             {
-                DirLock dirlock = new DirLock(ref total);
+                var dirlock = new DirLock(ref total);
                 dirlock.ShowDialog();
             }
         }
 
         private void propItem_Click(object sender, EventArgs e)
         {
-            Department d = total.Departments[tabControl1.SelectedIndex - permPages()];
-            DepartmentProperties prop = new DepartmentProperties(ref d, false);
+            var d = total.Departments[tabControl1.SelectedIndex - permPages()];
+            var prop = new DepartmentProperties(ref d, false);
             prop.ShowDialog();
         }
 
@@ -274,7 +270,7 @@ namespace Portaflex
         {
             if (tabControl1.SelectedTab != dirPage)
             {
-                Department d = total.Departments[tabControl1.SelectedIndex - permPages()];
+                var d = total.Departments[tabControl1.SelectedIndex - permPages()];
                 total.Departments.Remove(d);
             }
             else
@@ -285,23 +281,23 @@ namespace Portaflex
 
         private void expItem_Click(object sender, EventArgs e)
         {
-            Department d = total.Departments[tabControl1.SelectedIndex - permPages()];
+            var d = total.Departments[tabControl1.SelectedIndex - permPages()];
 
-            SaveFileDialog expDialog = new SaveFileDialog();
+            var expDialog = new SaveFileDialog();
             expDialog.Filter = "FLX soubor|*.flx";
             expDialog.Title = "Exportovat středisko";
             expDialog.AddExtension = true;
             if (expDialog.ShowDialog() == DialogResult.OK)
             {
-                XMLSerializer ser = new XMLSerializer(expDialog.FileName);
+                var ser = new XMLSerializer(expDialog.FileName);
                 ser.SaveTotal(total);
-                Total t = ser.LoadTotal();
+                var t = ser.LoadTotal();
 
-                List<Department> toRemove = new List<Department>();
-                foreach (Department dep in t.Departments)
+                var toRemove = new List<Department>();
+                foreach (var dep in t.Departments)
                     if (dep.Name != d.Name)
                         toRemove.Add(dep);
-                foreach (Department dep in toRemove)
+                foreach (var dep in toRemove)
                     t.Departments.Remove(dep);
 
                 ser.SaveTotal(t);
@@ -310,7 +306,7 @@ namespace Portaflex
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {                                             
-            OpenFileDialog openDialog = new OpenFileDialog();
+            var openDialog = new OpenFileDialog();
             openDialog.Filter = "FLX file|*.flx";
             openDialog.Title = "Otevřít rozpočet";
             unlockStream();
@@ -339,19 +335,19 @@ namespace Portaflex
 
         private void openFile(string filename)
         {
-            XMLSerializer ser = new XMLSerializer(filename);
+            var ser = new XMLSerializer(filename);
             path = filename;
             saved = true;
 
             total = ser.LoadTotal();
             //odstrani se vsechny dosavadni stranky stredisek
-            for (int i = 1; i < tabControl1.TabCount - 1; )
+            for (var i = 1; i < tabControl1.TabCount - 1; )
                 tabControl1.TabPages.RemoveAt(i);
 
-            total.Departments.ListChanged += new ListChangedEventHandler(Departments_ListChanged);
-            total.DirChanged += new EventHandler(total_DirChanged);
-            int start = filename.LastIndexOf('\\') + 1;
-            int length = filename.IndexOf(".") - start;
+            total.Departments.ListChanged += Departments_ListChanged;
+            total.DirChanged += total_DirChanged;
+            var start = filename.LastIndexOf('\\') + 1;
+            var length = filename.IndexOf(".") - start;
             if (start >= 0 && length > 0)
                 this.Text = Texts.PrgName + " - " + filename.Substring(start, length);
             else
@@ -367,7 +363,7 @@ namespace Portaflex
             if (saved)
             {
                 unlockStream();
-                XMLSerializer ser = new XMLSerializer(path);
+                var ser = new XMLSerializer(path);
                 ser.SaveTotal(total);
                 lockStream(path);
             }
@@ -379,21 +375,21 @@ namespace Portaflex
 
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveDialog = new SaveFileDialog();
+            var saveDialog = new SaveFileDialog();
             saveDialog.Filter = "FLX soubor|*.flx";
             saveDialog.Title = "Uložit rozpočet";
             saveDialog.AddExtension = true;
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
-                XMLSerializer ser = new XMLSerializer(saveDialog.FileName);
+                var ser = new XMLSerializer(saveDialog.FileName);
                 ser.SaveTotal(total);
                 saved = true;
                 if (stream != null)
                     stream.Close();                
                 this.path = saveDialog.FileName;
                 lockStream(this.path);
-                Uri path = new Uri(saveDialog.FileName);
-                String filename = path.Segments[path.Segments.Length - 1];
+                var path = new Uri(saveDialog.FileName);
+                var filename = path.Segments[path.Segments.Length - 1];
                 this.Text = Texts.PrgName + " - " + filename.Substring(0, filename.IndexOf("."));
             }
         }
@@ -401,21 +397,21 @@ namespace Portaflex
         private void populateTabs()
         {
 
-            foreach (Department d in total.Departments)
+            foreach (var d in total.Departments)
             {
-                d.DepartmentChanged += new DepartmentChangedHandler(departmentChanged);
+                d.DepartmentChanged += departmentChanged;
                insertTabPage(createTabPage(d));
             }
         }
 
         private TabPage createTabPage(Department d)
         {
-            TabPage newtab = new TabPage(d.Name + " (" + d.Proc + "%)");
+            var newtab = new TabPage(d.Name + " (" + d.Proc + "%)");
             if (d.Locked && d.Password != "")
                 newtab.ImageIndex = 1;
             else
                 newtab.ImageIndex = 2;
-            BudgetPage bp = new BudgetPage(d,newtab);
+            var bp = new BudgetPage(d,newtab);
             bp.Dock = DockStyle.Fill;
             newtab.Controls.Add(bp);
             return newtab;
@@ -443,34 +439,34 @@ namespace Portaflex
 
         private void readExcelToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openDialog = new OpenFileDialog();
+            var openDialog = new OpenFileDialog();
             openDialog.Filter = "XLS soubor|*.xls|XLSX soubor|*.xlsx";
             openDialog.Title = "Otevřít excel";
             if (openDialog.ShowDialog() == DialogResult.OK)
             {
-                Dictionary<string, object> args = new Dictionary<string, object>();
+                var args = new Dictionary<string, object>();
                 args.Add("total", total);
                 args.Add("path", openDialog.FileName);
-                BackgroundWorkDialog workerDialog = new BackgroundWorkDialog(readExcel_DoWork, readExcel_RunWorkerCompleted, args);
+                var workerDialog = new BackgroundWorkDialog(readExcel_DoWork, readExcel_RunWorkerCompleted, args);
                 workerDialog.ShowDialog();
             }
         }
 
         private void readExcel_DoWork(object sender, DoWorkEventArgs e)
         {
-            Dictionary<string, object> args = e.Argument as Dictionary<string, object>;
-            Total total = args["total"] as Total;
-            string path = args["path"] as string;
-            List<Budget> list = XLSWorker.readBudgets(total, path);
+            var args = e.Argument as Dictionary<string, object>;
+            var total = args["total"] as Total;
+            var path = args["path"] as string;
+            var list = XLSWorker.readBudgets(total, path);
             args.Add("budgetlist", list);
             e.Result = args;
         }
 
         private void readExcel_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            Dictionary<string, object> args = e.Result as Dictionary<string, object>;
-            List<Budget> list = args["budgetlist"] as List<Budget>;
-            foreach (Budget b in list)
+            var args = e.Result as Dictionary<string, object>;
+            var list = args["budgetlist"] as List<Budget>;
+            foreach (var b in list)
                 total.Budgets.Add(b);
         }
 
@@ -479,11 +475,11 @@ namespace Portaflex
             total = new Total();
             unlockStream();
             //odstrani se vsechny dosavani stranky stredisek
-            for (int i = 1; i < tabControl1.TabCount - 1; )
+            for (var i = 1; i < tabControl1.TabCount - 1; )
                 tabControl1.TabPages.RemoveAt(i);
             this.Text = Texts.PrgName + " - " + Texts.NewTotal;
-            total.Departments.ListChanged += new ListChangedEventHandler(Departments_ListChanged);
-            total.DirChanged += new EventHandler(total_DirChanged);
+            total.Departments.ListChanged += Departments_ListChanged;
+            total.DirChanged += total_DirChanged;
             createTotalPage();
             path = "";
             saved = false;
@@ -491,7 +487,7 @@ namespace Portaflex
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
-            bool close = saveBeforeQuit();
+            var close = saveBeforeQuit();
             if (!close)
                 e.Cancel = true;
             else
@@ -515,29 +511,29 @@ namespace Portaflex
 
         private void readDataToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openDialog = new OpenFileDialog();
+            var openDialog = new OpenFileDialog();
             openDialog.Filter = "XLS soubor|*.xls|XLSX soubor|*.xlsx";
             openDialog.Title = "Otevřít excel";
             if (openDialog.ShowDialog() == DialogResult.OK)
             {
-                Dictionary<string, object> args = new Dictionary<string,object>();
+                var args = new Dictionary<string,object>();
                 args.Add("total",total);
                 args.Add("path", openDialog.FileName);
-                BackgroundWorkDialog workDialog = new BackgroundWorkDialog(readData_DoWork, readData_RunWorkerCompleted, args);
+                var workDialog = new BackgroundWorkDialog(readData_DoWork, readData_RunWorkerCompleted, args);
                 workDialog.ShowDialog();
             }
         }
 
         private void readData_DoWork(object sender, DoWorkEventArgs e)
         {
-            Dictionary<string, object> args = e.Argument as Dictionary<string, object>;
-            Total total = args["total"] as Total;
-            string path = args["path"] as string;
-            List<Budget> list = XLSWorker.readBudgets(total, path);
-            List<Budget> complete = new List<Budget>();
+            var args = e.Argument as Dictionary<string, object>;
+            var total = args["total"] as Total;
+            var path = args["path"] as string;
+            var list = XLSWorker.readBudgets(total, path);
+            var complete = new List<Budget>();
             complete.AddRange(total.Budgets.ToList());
             complete.AddRange(list);
-            SubDepartment sub = XLSWorker.readData(complete, path);
+            var sub = XLSWorker.readData(complete, path);
             args.Add("budgetlist", list);
             args.Add("newsubdep", sub);
             e.Result = args;
@@ -545,15 +541,15 @@ namespace Portaflex
 
         private void readData_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            Dictionary<string, object> args = e.Result as Dictionary<string, object>;
-            List<Budget> list = args["budgetlist"] as List<Budget>;
-            SubDepartment sub = args["newsubdep"] as SubDepartment;
+            var args = e.Result as Dictionary<string, object>;
+            var list = args["budgetlist"] as List<Budget>;
+            var sub = args["newsubdep"] as SubDepartment;
 
-            foreach (Budget b in list)
+            foreach (var b in list)
                 total.Budgets.Add(b);
 
             sub.Name = "Nové podstředisko";
-            Department d = new Department(total);
+            var d = new Department(total);
             d.Locked = false;
             d.Password = "";
             d.Name = "Nové středisko";
@@ -563,19 +559,19 @@ namespace Portaflex
 
         private void exportToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveDialog = new SaveFileDialog();
+            var saveDialog = new SaveFileDialog();
             saveDialog.Filter = "XLS soubor|*.xls|XLSX soubor|*.xlsx";
             saveDialog.Title = "Exportovat";
             saveDialog.AddExtension = true;
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
-                string filename = saveDialog.FileName;
+                var filename = saveDialog.FileName;
                 if (IsFileLocked(filename))
                 {
                     MessageBox.Show("Soubor " + filename.Substring(filename.LastIndexOf('\\') + 1) + " je používán jiným procesem.", "Chyba při exportu", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
                 }
-                List<DataGridView> list = new List<DataGridView>();
+                var list = new List<DataGridView>();
                 list.Add(tp.getData());
                 foreach (TabPage page in tabControl1.TabPages)
                 {
@@ -585,13 +581,13 @@ namespace Portaflex
                             list.Add(((BudgetPage)c).getData());
                     }
                 }
-                String path = saveDialog.FileName;
-                Dictionary<string, object> args = new Dictionary<string, object>();
+                var path = saveDialog.FileName;
+                var args = new Dictionary<string, object>();
                 args.Add("total", total);
                 args.Add("list", list);
                 args.Add("path", path);
-                String label = "Probíhá export do Excelu...";
-                BackgroundWorkDialog workDialog = new BackgroundWorkDialog(export_DoWork, export_RunWorkerCompleted, args, "Export", label);
+                var label = "Probíhá export do Excelu...";
+                var workDialog = new BackgroundWorkDialog(export_DoWork, export_RunWorkerCompleted, args, "Export", label);
                 workDialog.ShowDialog();
                 
             }
@@ -599,10 +595,10 @@ namespace Portaflex
 
         private void export_DoWork(object sender, DoWorkEventArgs e)
         {
-            Dictionary<string, object> args = e.Argument as Dictionary<string, object>;
-            Total total = args["total"] as Total;
-            string path = args["path"] as string;
-            List<DataGridView> list = args["list"] as List<DataGridView>;
+            var args = e.Argument as Dictionary<string, object>;
+            var total = args["total"] as Total;
+            var path = args["path"] as string;
+            var list = args["list"] as List<DataGridView>;
             XLSWorker.writeData(total, list, path);
         }
 
@@ -613,7 +609,7 @@ namespace Portaflex
 
         private bool IsFileLocked(String path)
         {
-            FileInfo file = new FileInfo(path);
+            var file = new FileInfo(path);
             FileStream stream = null;
             try
             {
@@ -640,43 +636,43 @@ namespace Portaflex
 
         private void importDepToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog importDialog = new OpenFileDialog();
+            var importDialog = new OpenFileDialog();
             importDialog.Filter = "FLX file|*.flx";
             importDialog.Title = "Importovat střediska";
             if (importDialog.ShowDialog() == DialogResult.OK)
             {
-                XMLSerializer ser = new XMLSerializer(importDialog.FileName);
-                Total t = ser.LoadTotal();
+                var ser = new XMLSerializer(importDialog.FileName);
+                var t = ser.LoadTotal();
                 total.Dir.Password = t.Dir.Password;
-                foreach (Budget b in t.Budgets)
+                foreach (var b in t.Budgets)
                 {
                     if(!total.ContainsBudget(b.ID, b.Name))
                     {
                         total.Budgets.Add(b);
                     }
-                    int i = total.BudgetIndex(b.ID, b.Name);
+                    var i = total.BudgetIndex(b.ID, b.Name);
                     if (i >= 0 && total.Dir.Values[i] == 0)
                     {
                         total.Dir.Values[i] = t.Dir.Values[t.Budgets.IndexOf(b)];
                     }
                
                 }
-                foreach (Department d in t.Departments)
+                foreach (var d in t.Departments)
                 {
-                    Department newDep = new Department(total);
+                    var newDep = new Department(total);
                     
                     newDep.Name = d.Name;
                     newDep.Locked = d.Locked;
                     newDep.Password = d.Password;
                     newDep.Proc = d.Proc;
 
-                    foreach (SubDepartment sub in d.SubDepartments)
+                    foreach (var sub in d.SubDepartments)
                     {
                         newDep.SubDepartments.Add(sub);
-                        foreach (Budget b in t.Budgets)
+                        foreach (var b in t.Budgets)
                         {
-                            int from = t.Budgets.IndexOf(b);
-                            int to = total.BudgetIndex(b.ID, b.Name);
+                            var from = t.Budgets.IndexOf(b);
+                            var to = total.BudgetIndex(b.ID, b.Name);
                             if(to >= 0 && from >= 0 && to != from)
                             {
                                 sub.Values[to] = sub.Values[from];
@@ -696,35 +692,35 @@ namespace Portaflex
             if (tabControl1.SelectedTab == addPage || tabControl1.SelectedTab == totalPage || tabControl1.SelectedTab == dirPage)
                 return;
 
-            Department department = total.Departments[tabControl1.SelectedIndex - permPages()];
-            OpenFileDialog importDialog = new OpenFileDialog();
+            var department = total.Departments[tabControl1.SelectedIndex - permPages()];
+            var importDialog = new OpenFileDialog();
             importDialog.Filter = "FLX file|*.flx";
             importDialog.Title = "Importovat podstřediska";
             if (importDialog.ShowDialog() == DialogResult.OK)
             {
-                XMLSerializer ser = new XMLSerializer(importDialog.FileName);
-                Total t = ser.LoadTotal();
+                var ser = new XMLSerializer(importDialog.FileName);
+                var t = ser.LoadTotal();
                 if (t.Departments.Count < 1 || t.Departments[0].SubDepartments.Count < 1)
                     return;
-                foreach (Budget b in t.Budgets)
+                foreach (var b in t.Budgets)
                 {
                     if (!total.ContainsBudget(b.ID, b.Name))
                     {
                         total.Budgets.Add(b);
                     }
-                    int i = total.BudgetIndex(b.ID, b.Name);
+                    var i = total.BudgetIndex(b.ID, b.Name);
                     if (i >= 0 && total.Dir.Values[i] == 0)
                     {
                         total.Dir.Values[i] = t.Dir.Values[t.Budgets.IndexOf(b)];
                     }
                 }
 
-                SubDepartment sub = t.Departments[0].SubDepartments[0];
+                var sub = t.Departments[0].SubDepartments[0];
                 department.SubDepartments.Add(sub);
-                foreach (Budget b in t.Budgets)
+                foreach (var b in t.Budgets)
                 {
-                    int from = t.Budgets.IndexOf(b);
-                    int to = total.BudgetIndex(b.ID, b.Name);
+                    var from = t.Budgets.IndexOf(b);
+                    var to = total.BudgetIndex(b.ID, b.Name);
                     if (to >= 0 && from >= 0 && to != from)
                     {
                         sub.Values[to] = sub.Values[from];
@@ -740,7 +736,7 @@ namespace Portaflex
         /// <returns>true pokud se ma pokracovat v ukonceni programu</returns>
         private bool saveBeforeQuit()
         {
-            DialogResult res = MessageBox.Show("Soubor nebyl uložen, chcete jej uložit?", "Portaflex", MessageBoxButtons.YesNoCancel);
+            var res = MessageBox.Show("Soubor nebyl uložen, chcete jej uložit?", "Portaflex", MessageBoxButtons.YesNoCancel);
             if(res == DialogResult.Cancel)
                 return false;
             if (res == DialogResult.Yes)

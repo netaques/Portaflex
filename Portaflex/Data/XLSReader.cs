@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Portaflex.Data;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Windows.Forms;
@@ -32,11 +30,11 @@ namespace Portaflex
             xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
             if (xlWorkBook.Worksheets.Count < t.Departments.Count + 1)
             {
-                int count = t.Departments.Count + 1 - xlWorkBook.Worksheets.Count;
-                for (int i = 0; i < count; i++)
+                var count = t.Departments.Count + 1 - xlWorkBook.Worksheets.Count;
+                for (var i = 0; i < count; i++)
                     xlWorkBook.Worksheets.Add();
             }
-            for (int page = 0; page < data.Count; page++)
+            for (var page = 0; page < data.Count; page++)
             {
                 string title;
                 xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(page + 1);
@@ -50,24 +48,24 @@ namespace Portaflex
                 xlWorkSheet.get_Range("a1", "a1").Font.Size = 14;
                 xlWorkSheet.get_Range("a1", "a1").Font.Bold = true;
 
-                char c = 'a';
+                var c = 'a';
                 xlWorkSheet.get_Range("a2").EntireRow.Font.Bold = true;
-                for (int i = 0; i < data[page].ColumnCount; i++)
+                for (var i = 0; i < data[page].ColumnCount; i++)
                 {
                     xlWorkSheet.Cells[2, i + 1] = data[page].Columns[i].HeaderText;
                 }
-                for (int i = 0; i < data[page].RowCount; i++)
+                for (var i = 0; i < data[page].RowCount; i++)
                 {
                     if (i < t.Budgets.Count && t.Budgets[i].Sum)
                     {
-                        string s = "a" + (int)(i + 3);
+                        var s = "a" + (int)(i + 3);
                         xlWorkSheet.get_Range(s).EntireRow.Font.Bold = true;
                     }
-                    for (int j = 0; j < data[page].ColumnCount; j++)
+                    for (var j = 0; j < data[page].ColumnCount; j++)
                         xlWorkSheet.Cells[i + 3, j + 1] = data[page].Rows[i].Cells[j].Value;
                 }
                 c = 'a';
-                for (int i = 0; i < data[page].ColumnCount; i++)
+                for (var i = 0; i < data[page].ColumnCount; i++)
                 {
                     xlWorkSheet.get_Range(c + "2").EntireColumn.AutoFit();
                     c++;
@@ -93,19 +91,19 @@ namespace Portaflex
             xlApp = new Excel.Application();
             xlWorkBook = xlApp.Workbooks.Open(path, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
 
-            List<Budget> list = new List<Budget>();
+            var list = new List<Budget>();
             xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
-            Excel.Range range = xlWorkSheet.UsedRange;
+            var range = xlWorkSheet.UsedRange;
 
-            int j = -1;
-            bool income = false;
-            for (int i = 1; i <= range.Rows.Count; i++)                
+            var j = -1;
+            var income = false;
+            for (var i = 1; i <= range.Rows.Count; i++)                
             {
                 if (j == -1)
                 {
-                    for (int col = 1; col < range.Columns.Count; col++)
+                    for (var col = 1; col < range.Columns.Count; col++)
                     {
-                        string str = (string)(range.Cells[i, col] as Excel.Range).Value2;
+                        var str = (string)(range.Cells[i, col] as Excel.Range).Value2;
                         if (str != null && str.Contains("Výsledovka"))
                         {
                             j = col;
@@ -115,11 +113,11 @@ namespace Portaflex
                 }
                 else
                 {
-                    string id = getCellContent(i,j + ID_OFFSET,range);                    
-                    string name = getCellContent(i,j+NAME_OFFSET, range);
+                    var id = getCellContent(i,j + ID_OFFSET,range);                    
+                    var name = getCellContent(i,j+NAME_OFFSET, range);
                     if (id != null)
                     {
-                        bool sum = id.Contains("x");
+                        var sum = id.Contains("x");
                         if (id.Contains("Výnosy"))
                             income = true;
                         if (id.Contains("Náklady"))
@@ -144,15 +142,15 @@ namespace Portaflex
 
         private static SubDepartment initDep(int count)
         {
-            SubDepartment dep = new SubDepartment();
-            for (int i = 0; i < count; i++)
+            var dep = new SubDepartment();
+            for (var i = 0; i < count; i++)
                 dep.Values.Add(0);
             return dep;
         }
 
         public static SubDepartment readData(List<Budget> budgets, string path)
         {
-            SubDepartment dep = initDep(budgets.Count);
+            var dep = initDep(budgets.Count);
             
             Excel.Application xlApp;
             Excel.Workbook xlWorkBook;
@@ -162,16 +160,16 @@ namespace Portaflex
             xlWorkBook = xlApp.Workbooks.Open(path, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
 
             xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
-            Excel.Range range = xlWorkSheet.UsedRange;
+            var range = xlWorkSheet.UsedRange;
 
-            int j = -1;
-            for (int i = 1; i <= range.Rows.Count; i++)
+            var j = -1;
+            for (var i = 1; i <= range.Rows.Count; i++)
             {
                 if (j == -1)
                 {
-                    for (int col = 1; col < range.Columns.Count; col++)
+                    for (var col = 1; col < range.Columns.Count; col++)
                     {
-                        string str = (string)(range.Cells[i, col] as Excel.Range).Value2;
+                        var str = (string)(range.Cells[i, col] as Excel.Range).Value2;
                         if (str != null && str.Contains("Výsledovka"))
                         {
                             j = col;
@@ -181,12 +179,12 @@ namespace Portaflex
                 }
                 else
                 {
-                    string id = getCellContent(i, j + ID_OFFSET, range);
-                    string name = getCellContent(i, j + NAME_OFFSET, range);
-                    string data = getCellContent(i, j + DATA_OFFSET, range);
+                    var id = getCellContent(i, j + ID_OFFSET, range);
+                    var name = getCellContent(i, j + NAME_OFFSET, range);
+                    var data = getCellContent(i, j + DATA_OFFSET, range);
                     if (id != null && name != null && data != null)
                     {
-                        int index = findPosition(id, name, budgets);
+                        var index = findPosition(id, name, budgets);
                         if (index != -1)
                             dep.Values[index] = Convert.ToDouble(data);
                     }
@@ -204,7 +202,7 @@ namespace Portaflex
 
         private static int findPosition(string id, string name, List<Budget> list)
         {
-            foreach (Budget b in list)
+            foreach (var b in list)
             {
                 if (b.ID == id && b.Name == name)
                     return list.IndexOf(b);

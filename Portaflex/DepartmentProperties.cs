@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Portaflex.Data;
 
@@ -56,7 +50,7 @@ namespace Portaflex
 
         private void nameLabel_TextChanged(object sender, EventArgs e)
         {
-            bool ok = !(nameTextBox.Text == "");
+            var ok = !(nameTextBox.Text == "");
             OKbutton.Enabled = ok;
             //nameTextBox.BackColor = ok ? Color.White : Color.Tomato;
         }
@@ -83,7 +77,7 @@ namespace Portaflex
 
         private void pwdCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            bool check = pwdCheckBox.Checked;
+            var check = pwdCheckBox.Checked;
             pwdLabel.Enabled = check;
             pwd2Label.Enabled = check;
             pwdTextBox.Enabled = check;
@@ -126,7 +120,7 @@ namespace Portaflex
 
         private void hidePwd()
         {
-            int offset = 20;
+            var offset = 20;
             if (!(d is Department))
             {
                 offset = 0;

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Portaflex.Data
+﻿namespace Portaflex.Data
 {
     public static class Texts
     {

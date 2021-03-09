@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
-using System.IO;
 
 namespace Portaflex
 {
@@ -14,26 +11,22 @@ namespace Portaflex
         [STAThread]
         static void Main(string[] args)
         {
-                    AppDomain.CurrentDomain.UnhandledException +=
-         new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
-            Application.ThreadException +=
-              new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            Application.ThreadException += Application_ThreadException;
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Main(args));
         }
 
-        static void CurrentDomain_UnhandledException
-         (object sender, UnhandledExceptionEventArgs e)
+        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             try
             {
-                
-                Exception ex = (Exception)e.ExceptionObject;
+                var ex = (Exception) e.ExceptionObject;
 
                 MessageBox.Show("Prosím kontaktujte vývojáře "
-                   + "s následující informací:\n\n" + ex.Message + ex.StackTrace,
-                   "Kritická chyba", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                + "s následující informací:\n\n" + ex.Message + ex.StackTrace,
+                    "Kritická chyba", MessageBoxButtons.OK, MessageBoxIcon.Stop);
             }
             finally
             {
@@ -42,15 +35,15 @@ namespace Portaflex
         }
 
         public static void Application_ThreadException
-          (object sender, System.Threading.ThreadExceptionEventArgs e)
+            (object sender, System.Threading.ThreadExceptionEventArgs e)
         {
-            DialogResult result = DialogResult.Abort;
+            var result = DialogResult.Abort;
             try
             {
                 result = MessageBox.Show("Prosím kontaktujte vývojáře "
-                  + "s následující informací:\n\n" + e.Exception.Message
-                  + e.Exception.StackTrace, "Chyba aplikace",
-                  MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Stop);
+                                         + "s následující informací:\n\n" + e.Exception.Message
+                                         + e.Exception.StackTrace, "Chyba aplikace",
+                    MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Stop);
             }
             finally
             {

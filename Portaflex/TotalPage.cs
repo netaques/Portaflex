@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Portaflex.Data;
 using System.Reflection;
@@ -24,17 +21,17 @@ namespace Portaflex
             InitializeComponent();
             typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null,
             dataGridView1, new object[] { true });
-            dataGridView1.DataError += new DataGridViewDataErrorEventHandler(dataGridView1_DataError);
+            dataGridView1.DataError += dataGridView1_DataError;
             InitializeData(total);
         }
 
         private void InitializeData(Total total)
         {
             this.total = total;
-            total.BudgetChanged += new BudgetChangedHandler(total_BudgetChanged);
-            total.Departments.ListChanged += new ListChangedEventHandler(Departments_ListChanged);
-            total.Budgets.ListChanged += new ListChangedEventHandler(Budgets_ListChanged);
-            total.DirChanged += new EventHandler(total_DirChanged);
+            total.BudgetChanged += total_BudgetChanged;
+            total.Departments.ListChanged += Departments_ListChanged;
+            total.Budgets.ListChanged += Budgets_ListChanged;
+            total.DirChanged += total_DirChanged;
             formateNumberColumn(dataGridView1.Columns[2]);
 
             dataGridView1.Columns[0].DefaultCellStyle.BackColor = PortaflexColors.getColumnExpenseColor(0);
@@ -47,17 +44,17 @@ namespace Portaflex
                 dataGridView1.Columns[PERM_COLS - 1].ReadOnly = true;
                 dataGridView1.Columns[PERM_COLS - 1].DefaultCellStyle.BackColor = PortaflexColors.getColumnExpenseColor(1);
                 formateNumberColumn(dataGridView1.Columns[PERM_COLS - 1]);
-                total.Dir.Values.ListChanged += new ListChangedEventHandler(DirValues_ListChanged);
+                total.Dir.Values.ListChanged += DirValues_ListChanged;
             }
             else
                 total.Dir = new Directing();
 
-            foreach (Department dep in total.Departments)
+            foreach (var dep in total.Departments)
             {
                 // vytvorime sloupec pro oddeleni
-                string header = createDepHeader(dep);
-                dep.DepartmentChanged += new DepartmentChangedHandler(d_DepartmentChanged);
-                DataGridViewTextBoxColumn col = new DataGridViewTextBoxColumn();
+                var header = createDepHeader(dep);
+                dep.DepartmentChanged += d_DepartmentChanged;
+                var col = new DataGridViewTextBoxColumn();
                 col.DefaultCellStyle.BackColor = PortaflexColors.getColumnExpenseColor(2 + total.Departments.IndexOf(dep));
                 formateNumberColumn(col);
                 col.HeaderText = header;
@@ -65,15 +62,15 @@ namespace Portaflex
                 dataGridView1.Columns.Add(col);
             }
 
-            foreach (Budget b in total.Budgets)
+            foreach (var b in total.Budgets)
             {
-                int i = total.Budgets.IndexOf(b);
+                var i = total.Budgets.IndexOf(b);
                 double sum = 0;
-                DataGridViewRow row = fillRowWithData(b);
-                foreach (Department dep in total.Departments)
+                var row = fillRowWithData(b);
+                foreach (var dep in total.Departments)
                 {
-                    DataGridViewTextBoxCell newcell = new DataGridViewTextBoxCell();
-                    double depSum = sumDep(dep,i);
+                    var newcell = new DataGridViewTextBoxCell();
+                    var depSum = sumDep(dep,i);
                     sum += depSum;
                     newcell.Value = depSum;
                     row.Cells.Add(newcell);
@@ -86,11 +83,11 @@ namespace Portaflex
 
                 if (b.Sum)
                 {
-                    DataGridViewCellStyle s = new DataGridViewCellStyle();
+                    var s = new DataGridViewCellStyle();
                     s.Font = new Font(DefaultFont, FontStyle.Bold);
                     dataGridView1.Rows[dataGridView1.Rows.Count - 1].DefaultCellStyle = s;
 
-                    for (int col = 2; col < dataGridView1.ColumnCount; col++)
+                    for (var col = 2; col < dataGridView1.ColumnCount; col++)
                     {
                         dataGridView1.Rows[dataGridView1.Rows.Count - 1].Cells[col].ReadOnly = true;
                         calcSum(i, col);
@@ -116,20 +113,20 @@ namespace Portaflex
 
         private void total_DirChanged(object sender, EventArgs e)
         {
-            bool hasDir = total.Dir != null;
+            var hasDir = total.Dir != null;
             dataGridView1.Columns[PERM_COLS - 1].Visible = hasDir;
             formateNumberColumn(dataGridView1.Columns[PERM_COLS - 1]);
             if (hasDir)
             {
-                int i = 0;
-                foreach (Budget b in total.Budgets)
+                var i = 0;
+                foreach (var b in total.Budgets)
                     dataGridView1.Rows[i++].Cells[PERM_COLS - 1].Value = 0;
-                total.Dir.Values.ListChanged += new ListChangedEventHandler(DirValues_ListChanged);
+                total.Dir.Values.ListChanged += DirValues_ListChanged;
             }
             else
             {
-                int i = 0;
-                foreach (Budget b in total.Budgets)
+                var i = 0;
+                foreach (var b in total.Budgets)
                     dataGridView1.Rows[i++].Cells[PERM_COLS - 1].Value = 0;       
             }
         }
@@ -143,7 +140,7 @@ namespace Portaflex
                 calcSum(row, 3);
                 dataGridView1.Rows[row].Cells[2].Value = sumRow(row);
                 calcSum(row, 2);
-                foreach (Department d in total.Departments)
+                foreach (var d in total.Departments)
                 {
                     dataGridView1.Rows[row].Cells[i + 3].Value = sumDep(d, row);
                     calcSum(row, i + 3);
@@ -156,27 +153,27 @@ namespace Portaflex
         {
             if (e.ListChangedType == ListChangedType.ItemAdded)
             {
-                Budget b = total.Budgets[e.NewIndex];
+                var b = total.Budgets[e.NewIndex];
                 dataGridView1.Rows.Insert(e.NewIndex, createNewRow(b.Name, b.ID));
 
                 //dataGridView1.Rows.Add(createNewRow(b.Name, b.ID));
                  
                 if (b.Sum)
                 {
-                    DataGridViewCellStyle s = dataGridView1.Rows[e.NewIndex].DefaultCellStyle;
+                    var s = dataGridView1.Rows[e.NewIndex].DefaultCellStyle;
                     s.Font = new Font(DefaultFont, FontStyle.Bold);
                     dataGridView1.Rows[e.NewIndex].DefaultCellStyle = s;
 
-                    for (int col = 2; col < dataGridView1.ColumnCount; col++)
+                    for (var col = 2; col < dataGridView1.ColumnCount; col++)
                     {
                         dataGridView1.Rows[e.NewIndex].Cells[col].ReadOnly = true;                        
                         calcSum(e.NewIndex, col);
                     }
-                    for (int i = e.NewIndex + 1; i < dataGridView1.RowCount; i++)
+                    for (var i = e.NewIndex + 1; i < dataGridView1.RowCount; i++)
                     {
                         if (i < total.Budgets.Count && total.Budgets[i].Sum)
                         {
-                            for (int col = 2; col < dataGridView1.ColumnCount; col++)
+                            for (var col = 2; col < dataGridView1.ColumnCount; col++)
                             {
                                 calcSum(i, col);
                             }
@@ -193,7 +190,7 @@ namespace Portaflex
             else if (e.ListChangedType == ListChangedType.ItemDeleted)
             {
                 dataGridView1.Rows.RemoveAt(e.NewIndex);
-                for (int i = 2; i < dataGridView1.ColumnCount; i++)
+                for (var i = 2; i < dataGridView1.ColumnCount; i++)
                 {
                     calcSum(e.NewIndex, i);
                 }
@@ -205,23 +202,23 @@ namespace Portaflex
         {
             if (e.ListChangedType == ListChangedType.ItemAdded)
             {
-                Department d = total.Departments[e.NewIndex];
-                d.DepartmentChanged += new DepartmentChangedHandler(d_DepartmentChanged);
+                var d = total.Departments[e.NewIndex];
+                d.DepartmentChanged += d_DepartmentChanged;
                 dataGridView1.Columns.Add(d.Name, createDepHeader(d));
                 dataGridView1.Columns[e.NewIndex + PERM_COLS].ReadOnly = true;
                 dataGridView1.Columns[e.NewIndex + PERM_COLS].SortMode = DataGridViewColumnSortMode.NotSortable;
                 dataGridView1.Columns[e.NewIndex + PERM_COLS].DefaultCellStyle.Format = "N2";
                 dataGridView1.Columns[e.NewIndex + PERM_COLS].ValueType = typeof(System.Double);
                 dataGridView1.Columns[e.NewIndex + PERM_COLS].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                for (int i = 0; i < dataGridView1.Rows.Count - 1; i++)
+                for (var i = 0; i < dataGridView1.Rows.Count - 1; i++)
                 {
                     dataGridView1.Rows[i].Cells[dataGridView1.Columns.Count - 1].Value = sumDep(d, i);
                     calcSum(i, dataGridView1.Columns.Count - 1);
                     calcSum(i, 2);
 
-                    for (int j = 0; j < dataGridView1.ColumnCount; j++)
+                    for (var j = 0; j < dataGridView1.ColumnCount; j++)
                     {
-                        Color color = getIndexColor(j);
+                        var color = getIndexColor(j);
                         dataGridView1[j, i].Style.BackColor = total.Budgets[i].Income ? PortaflexColors.dimColor(color, -20) : color;
                     } 
                 }
@@ -230,13 +227,13 @@ namespace Portaflex
             else if (e.ListChangedType == ListChangedType.ItemDeleted)
             {
                 dataGridView1.Columns.RemoveAt(e.NewIndex + PERM_COLS);
-                for (int i = 0; i < dataGridView1.Rows.Count - 1; i++)
+                for (var i = 0; i < dataGridView1.Rows.Count - 1; i++)
                 {
                     dataGridView1.Rows[i].Cells[2].Value = sumRow(i);
 
-                    for (int j = PERM_COLS; j < dataGridView1.ColumnCount; j++)
+                    for (var j = PERM_COLS; j < dataGridView1.ColumnCount; j++)
                     {
-                        Color color = getIndexColor(j);
+                        var color = getIndexColor(j);
                         dataGridView1[j,i].Style.BackColor = total.Budgets[i].Income ? PortaflexColors.dimColor(color,-20) : color;
                     }    
                 }
@@ -247,16 +244,16 @@ namespace Portaflex
 
         private void d_DepartmentChanged(object sender, DepartmentChangeEventArgs e)
         {
-            Department dep = (Department) sender;
-            int index = total.Departments.IndexOf(dep);
+            var dep = (Department) sender;
+            var index = total.Departments.IndexOf(dep);
             if (e.Type == DepartmentChangeTypes.Name || e.Type == DepartmentChangeTypes.Proc)
             {                
                 dataGridView1.Columns[index + PERM_COLS].Name = createDepHeader(dep);
                 dataGridView1.Columns[index + PERM_COLS].HeaderText = createDepHeader(dep);
                 if (e.Type == DepartmentChangeTypes.Proc)
                 {
-                    int i = 0;
-                    foreach (Budget b in total.Budgets)
+                    var i = 0;
+                    foreach (var b in total.Budgets)
                     {
                         dataGridView1.Rows[i].Cells[index + PERM_COLS].Value = sumDep(dep, i);
                         if (b.Sum)
@@ -267,7 +264,7 @@ namespace Portaflex
             }
             else if (e.Type == DepartmentChangeTypes.Value)
             {
-                int row = e.AffectedValueIndex;
+                var row = e.AffectedValueIndex;
                 dataGridView1.Rows[row].Cells[2].Value = sumRow(row);
                 calcSum(row, 2);
                 dataGridView1.Rows[row].Cells[index + PERM_COLS].Value = sumDep(dep,row);
@@ -276,8 +273,8 @@ namespace Portaflex
             }
             else if (e.Type == DepartmentChangeTypes.Dir)
             {
-                int i = 0;
-                foreach (Budget b in total.Budgets)
+                var i = 0;
+                foreach (var b in total.Budgets)
                 {
                     dataGridView1.Rows[i].Cells[2].Value = sumRow(i);
                     dataGridView1.Rows[i].Cells[index + PERM_COLS].Value = dep.TotalSum(i);
@@ -288,7 +285,7 @@ namespace Portaflex
 
         private void total_BudgetChanged(object sender, BudgetEventArgs e)
         {
-            int index = e.Index;
+            var index = e.Index;
             if (index < 0 || index >= dataGridView1.RowCount)
             {
                 dataGridView1.Rows.Add(createNewRow(Texts.Budget, Texts.Id));
@@ -334,8 +331,8 @@ namespace Portaflex
 
         private void newDepButton_Click(object sender, EventArgs e)
         {
-            Department d = new Department(total);
-            DepartmentProperties prop = new DepartmentProperties(ref d, true, "Nové středisko");
+            var d = new Department(total);
+            var prop = new DepartmentProperties(ref d, true, "Nové středisko");
             if (prop.ShowDialog() != DialogResult.OK)
                 return;
             d.Locked = false;
@@ -351,7 +348,7 @@ namespace Portaflex
         {
             if (e.Button == MouseButtons.Right)
             {
-                DataGridView.HitTestInfo hinfo = dataGridView1.HitTest(e.X, e.Y);
+                var hinfo = dataGridView1.HitTest(e.X, e.Y);
                 if (hinfo.Type == DataGridViewHitTestType.ColumnHeader && hinfo.ColumnIndex == 3 && total.Dir != null)
                 {
                     selectedColumnIndex = hinfo.ColumnIndex;
@@ -388,10 +385,10 @@ namespace Portaflex
         {
             if (selectedRowIndex != -1)
             {
-                List<int> list = new List<int>();
-                for (int i = 0; i < dataGridView1.SelectedRows.Count; i++)
+                var list = new List<int>();
+                for (var i = 0; i < dataGridView1.SelectedRows.Count; i++)
                     list.Add(dataGridView1.SelectedRows[i].Index);
-                foreach(int i in list)
+                foreach(var i in list)
                     total.Budgets.RemoveAt(i);
                 selectedRowIndex = -1;
             }     
@@ -403,7 +400,7 @@ namespace Portaflex
             if (selectedRowIndex != -1)
             {
                 int i;
-                bool income = !total.Budgets[selectedRowIndex].Income;
+                var income = !total.Budgets[selectedRowIndex].Income;
                 for (i = selectedRowIndex - 1; i >= 0 && !total.Budgets[i].Sum; i--)
                     total.Budgets[i].Income = income;
                 for (i = selectedRowIndex; i < dataGridView1.RowCount - 1 && !total.Budgets[i].Sum; i++)
@@ -419,7 +416,7 @@ namespace Portaflex
         {
             if (selectedRowIndex != -1)
             {
-                bool income = total.Budgets.Count > selectedRowIndex && total.Budgets[selectedRowIndex].Income;
+                var income = total.Budgets.Count > selectedRowIndex && total.Budgets[selectedRowIndex].Income;
                 total.Budgets.Insert(selectedRowIndex, new Budget(Texts.Budget, Texts.Id, false, income));
             }
         }
@@ -429,7 +426,7 @@ namespace Portaflex
         {
             if (selectedRowIndex != -1)
             {
-                bool income = selectedRowIndex > 0 && selectedRowIndex < total.Budgets.Count && total.Budgets[selectedRowIndex - 1].Income;
+                var income = selectedRowIndex > 0 && selectedRowIndex < total.Budgets.Count && total.Budgets[selectedRowIndex - 1].Income;
                 total.Budgets.Insert(selectedRowIndex, new Budget(Texts.Sum, Texts.Id, true, income));
             }
         }
@@ -450,7 +447,7 @@ namespace Portaflex
 
         private void setRowColorAsIncome(DataGridViewRow row, int dim)
         {
-            for (int i = 0; i < dataGridView1.ColumnCount; i++)
+            for (var i = 0; i < dataGridView1.ColumnCount; i++)
             {
                 row.Cells[i].Style.BackColor = PortaflexColors.dimColor(getIndexColor(i), dim);
             }
@@ -458,7 +455,7 @@ namespace Portaflex
 
         private void setRowColorAsExpense(DataGridViewRow row)
         {
-            for (int i = 0; i < dataGridView1.ColumnCount; i++)
+            for (var i = 0; i < dataGridView1.ColumnCount; i++)
             {
                 row.Cells[i].Style.BackColor = getIndexColor(i);
             }
@@ -484,11 +481,11 @@ namespace Portaflex
         private void createTotalRow()
         {
             dataGridView1.Rows.Add(createNewRow("Σ", ""));
-            DataGridViewRow row = dataGridView1.Rows[dataGridView1.RowCount - 1];
+            var row = dataGridView1.Rows[dataGridView1.RowCount - 1];
             
             row.ReadOnly = true;
             
-            DataGridViewCellStyle s = new DataGridViewCellStyle();
+            var s = new DataGridViewCellStyle();
             s.Font = new Font(DefaultFont.FontFamily, 10, FontStyle.Bold);
             s.Alignment = DataGridViewContentAlignment.MiddleRight;
             s.BackColor = Color.Gold ;//Color.FromArgb(255, 255, 192);
@@ -500,8 +497,8 @@ namespace Portaflex
         private double calcNaklad()
         {
             double sum = 0;
-            int i = 0;
-            foreach (Budget b in total.Budgets)
+            var i = 0;
+            foreach (var b in total.Budgets)
             {
                 if (!b.Income && !b.Sum)
                     sum += sumRow(i);
@@ -513,8 +510,8 @@ namespace Portaflex
         private double calcObrat()
         {
             double sum = 0;
-            int i = 0;
-            foreach (Budget b in total.Budgets)
+            var i = 0;
+            foreach (var b in total.Budgets)
             {
                 if (b.Income)
                     sum += sumRow(i);
@@ -541,7 +538,7 @@ namespace Portaflex
             int rowSum;
             if (!total.Budgets[row].Sum)
             {
-                for (int i = row; i < total.Budgets.Count; i++)
+                for (var i = row; i < total.Budgets.Count; i++)
                 {
                     if (total.Budgets[i].Sum)
                     {
@@ -580,12 +577,12 @@ namespace Portaflex
         /// <returns></returns>
         private string[] createNewRow(string name, string id)
         {
-            string[] s = new string[dataGridView1.Columns.Count];
+            var s = new string[dataGridView1.Columns.Count];
             s[0] = id;
             s[1] = name;
             s[2] = "0,00";
             s[3] = "0,00";
-            for (int i = PERM_COLS; i < s.Length; i++)
+            for (var i = PERM_COLS; i < s.Length; i++)
                 s[i] = "0,00";
             return s;
         }
@@ -599,7 +596,7 @@ namespace Portaflex
         {
             if (x < 0 || y < 0 || y >= dataGridView1.Rows.Count - 1)
                 return;
-            string value = dataGridView1.Rows[y].Cells[x].Value.ToString();
+            var value = dataGridView1.Rows[y].Cells[x].Value.ToString();
             if (x == 1) //name
             {
                 total.Budgets[y].Name = value;
@@ -625,8 +622,8 @@ namespace Portaflex
             vysledekTextLabel.Text = calcVysledek().ToString("C");
             nakladTextLabel.Text = calcNaklad().ToString("C");
 
-            DataGridViewRow totalRow = dataGridView1.Rows[dataGridView1.RowCount - 1];
-            for (int i = 2; i < dataGridView1.ColumnCount; i++)
+            var totalRow = dataGridView1.Rows[dataGridView1.RowCount - 1];
+            for (var i = 2; i < dataGridView1.ColumnCount; i++)
             {
                 totalRow.Cells[i].Value = calcColumn(i);
             }
@@ -635,7 +632,7 @@ namespace Portaflex
         private double calcColumn(int col)
         {
             double sum = 0;
-            for (int i = 0; i < dataGridView1.RowCount - 1; i++)
+            for (var i = 0; i < dataGridView1.RowCount - 1; i++)
             {
                 if (!total.Budgets[i].Sum)
                 {
@@ -658,7 +655,7 @@ namespace Portaflex
             double sum = 0;
             if (total.Dir != null && row < total.Dir.Values.Count)
                 sum = total.Dir.Values[row];
-            foreach (Department dep in total.Departments)
+            foreach (var dep in total.Departments)
             {
                 sum += dep.TotalSum(row);                
             }
@@ -672,11 +669,11 @@ namespace Portaflex
         /// <returns></returns>
         private DataGridViewRow fillRowWithData(Budget b)
         {
-            DataGridViewRow row = new DataGridViewRow();
-            DataGridViewTextBoxCell idcell = new DataGridViewTextBoxCell();
-            DataGridViewTextBoxCell namecell = new DataGridViewTextBoxCell();
-            DataGridViewTextBoxCell totalcell = new DataGridViewTextBoxCell();
-            DataGridViewTextBoxCell dircell = new DataGridViewTextBoxCell();
+            var row = new DataGridViewRow();
+            var idcell = new DataGridViewTextBoxCell();
+            var namecell = new DataGridViewTextBoxCell();
+            var totalcell = new DataGridViewTextBoxCell();
+            var dircell = new DataGridViewTextBoxCell();
             idcell.Value = b.ID;
             namecell.Value = b.Name;
             totalcell.Value = 0;
@@ -699,7 +696,7 @@ namespace Portaflex
         /// <returns></returns>
         private double sumDep(Department d, int row)
         {
-            double sum = d.TotalSum(row);
+            var sum = d.TotalSum(row);
             if (total.Dir != null && total.Dir.Values.Count < row)
                 sum += (total.Dir != null ? total.Dir.Values[row] * ((double)d.Proc) / 100 : 0);
 

@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 using System.Xml;
-using System.IO;
 
 namespace Portaflex.Data
 {
@@ -33,13 +29,13 @@ namespace Portaflex.Data
             /// <returns>Nactena data v tride Total</returns>
             public Total LoadTotal()
             {
-                XmlSerializer s = new XmlSerializer(typeof(Total), extra);
+                var s = new XmlSerializer(typeof(Total), extra);
                 XmlTextReader xmlReader = null;
                 try
                 {
                     
                     xmlReader = new XmlTextReader(this.fullFilePath);
-                    Total total = (Total)s.Deserialize(xmlReader);
+                    var total = (Total)s.Deserialize(xmlReader);
                     updateParentReference(total);
                     xmlReader.Close();
                     return total;
@@ -58,7 +54,7 @@ namespace Portaflex.Data
             /// <param name="total"></param>
             private void updateParentReference(Total total)
             {
-                foreach (Department d in total.Departments)
+                foreach (var d in total.Departments)
                     d.Parent = total;
             }
 
@@ -69,8 +65,8 @@ namespace Portaflex.Data
 
             public void SaveTotal(Total total)
             {
-                XmlSerializer s = new XmlSerializer(typeof(Total), extra);
-                XmlTextWriter xmlWriter = new XmlTextWriter(this.fullFilePath, System.Text.Encoding.UTF8);
+                var s = new XmlSerializer(typeof(Total), extra);
+                var xmlWriter = new XmlTextWriter(this.fullFilePath, System.Text.Encoding.UTF8);
 
                 s.Serialize(xmlWriter, total);
                 xmlWriter.Close();

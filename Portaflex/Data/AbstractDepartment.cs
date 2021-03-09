@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 using System.ComponentModel;
 
@@ -19,7 +16,7 @@ namespace Portaflex.Data
             get { return name; }
             set
             {
-                string oldname = name;
+                var oldname = name;
                 name = value;
                 if (oldname != name)
                     OnChange(new DepartmentChangeEventArgs(DepartmentChangeTypes.Name));
@@ -30,7 +27,7 @@ namespace Portaflex.Data
             get { return proc; }
             set
             {
-                decimal oldproc = proc;
+                var oldproc = proc;
                 proc = value;
                 if (oldproc != proc)
                     OnChange(new DepartmentChangeEventArgs(DepartmentChangeTypes.Proc));

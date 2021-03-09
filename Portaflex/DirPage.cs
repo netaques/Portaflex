@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Portaflex.Data;
 using System.Reflection;
@@ -23,10 +19,10 @@ namespace Portaflex
             InitializeComponent();
             typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null,
             dataGridView1, new object[] { true });
-            dataGridView1.DataError += new DataGridViewDataErrorEventHandler(dataGridView1_DataError);
+            dataGridView1.DataError += dataGridView1_DataError;
             InitializeData(t);
-            dataGridView1.CellValueChanged += new DataGridViewCellEventHandler(dataGridView1_CellValueChanged);
-            DataGridViewColumn col = dataGridView1.Columns[2];
+            dataGridView1.CellValueChanged += dataGridView1_CellValueChanged;
+            var col = dataGridView1.Columns[2];
             col.DefaultCellStyle.Format = "N2";
             col.ValueType = typeof(System.Double);
             col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
@@ -49,17 +45,17 @@ namespace Portaflex
             total = t;
             dir = t.Dir;
 
-            total.BudgetChanged += new BudgetChangedHandler(total_BudgetChanged);
-            total.Budgets.ListChanged += new ListChangedEventHandler(Budgets_ListChanged);
-            dir.Values.ListChanged += new ListChangedEventHandler(DirValues_ListChanged);
+            total.BudgetChanged += total_BudgetChanged;
+            total.Budgets.ListChanged += Budgets_ListChanged;
+            dir.Values.ListChanged += DirValues_ListChanged;
 
-            foreach (Budget b in total.Budgets)
+            foreach (var b in total.Budgets)
             {
-                int index = total.Budgets.IndexOf(b);
+                var index = total.Budgets.IndexOf(b);
                 dataGridView1.Rows.Add(createNewRow(b.Name, b.ID, dir.Values[index]));
                 if (b.Sum)
                 {
-                    DataGridViewCellStyle s = new DataGridViewCellStyle();
+                    var s = new DataGridViewCellStyle();
                     s.Font = new Font(DefaultFont, FontStyle.Bold);
                     dataGridView1.Rows[index].DefaultCellStyle = s;
                     dataGridView1.Rows[index].Cells[2].ReadOnly = true;
@@ -86,25 +82,25 @@ namespace Portaflex
         {
             if (e.ListChangedType == ListChangedType.ItemAdded)
             {
-                Budget b = total.Budgets[e.NewIndex];
+                var b = total.Budgets[e.NewIndex];
                 dataGridView1.Rows.Insert(e.NewIndex,createNewRow(b.Name, b.ID, 0));
 
                 if (b.Sum)
                 {
-                    DataGridViewCellStyle s = dataGridView1.Rows[e.NewIndex].DefaultCellStyle;
+                    var s = dataGridView1.Rows[e.NewIndex].DefaultCellStyle;
                     s.Font = new Font(DefaultFont, FontStyle.Bold);
                     dataGridView1.Rows[e.NewIndex].DefaultCellStyle = s;
 
-                    for (int col = 2; col < dataGridView1.ColumnCount; col++)
+                    for (var col = 2; col < dataGridView1.ColumnCount; col++)
                     {
                         dataGridView1.Rows[e.NewIndex].Cells[col].ReadOnly = true;
                         calcSum(e.NewIndex, col);
                     }
-                    for (int i = e.NewIndex + 1; i < dataGridView1.RowCount - 1; i++)
+                    for (var i = e.NewIndex + 1; i < dataGridView1.RowCount - 1; i++)
                     {
                         if (i < total.Budgets.Count && total.Budgets[i].Sum)
                         {
-                            for (int col = 2; col < dataGridView1.ColumnCount; col++)
+                            for (var col = 2; col < dataGridView1.ColumnCount; col++)
                             {
                                 calcSum(i, col);
                             }
@@ -125,7 +121,7 @@ namespace Portaflex
 
         private void total_BudgetChanged(object sender, BudgetEventArgs e)
         {
-            int index = e.Index;
+            var index = e.Index;
             if (index < 0 || index >= dataGridView1.RowCount - 1)
             {
                 dataGridView1.Rows.Add(createNewRow(Texts.Budget, Texts.Id, 0));
@@ -148,7 +144,7 @@ namespace Portaflex
 
         private void setRowColorAsIncome(DataGridViewRow row, int dim)
         {
-            for (int i = 0; i < dataGridView1.ColumnCount; i++)
+            for (var i = 0; i < dataGridView1.ColumnCount; i++)
             {
                 row.Cells[i].Style.BackColor = PortaflexColors.dimColor(PortaflexColors.getColumnExpenseColor(1), dim);
             }
@@ -156,7 +152,7 @@ namespace Portaflex
 
         private void setRowColorAsExpense(DataGridViewRow row)
         {
-            for (int i = 0; i < dataGridView1.ColumnCount; i++)
+            for (var i = 0; i < dataGridView1.ColumnCount; i++)
             {
                 row.Cells[i].Style.BackColor = PortaflexColors.getColumnExpenseColor(1);
             }
@@ -170,7 +166,7 @@ namespace Portaflex
         /// <returns></returns>
         private string[] createNewRow(string name, string id, double val)
         {
-            string[] s = new string[dataGridView1.Columns.Count];
+            var s = new string[dataGridView1.Columns.Count];
             s[0] = id;
             s[1] = name;
             s[2] = val.ToString("N2");
@@ -200,7 +196,7 @@ namespace Portaflex
                 return;
             if (!total.Budgets[row].Sum)
             {
-                for (int i = row; i < total.Budgets.Count; i++)
+                for (var i = row; i < total.Budgets.Count; i++)
                 {
                     if (total.Budgets[i].Sum)
                     {
@@ -230,7 +226,7 @@ namespace Portaflex
         {
             if (x < 0 || y < 0 || y >= dataGridView1.Rows.Count - 1)
                 return;
-            string value = dataGridView1.Rows[y].Cells[x].Value.ToString();
+            var value = dataGridView1.Rows[y].Cells[x].Value.ToString();
             if (x == 1) //name
             {
                 total.Budgets[y].Name = value;
@@ -254,11 +250,11 @@ namespace Portaflex
         private void createTotalRow()
         {
             dataGridView1.Rows.Add(createNewRow("Σ", "", 0));
-            DataGridViewRow row = dataGridView1.Rows[dataGridView1.RowCount - 1];
+            var row = dataGridView1.Rows[dataGridView1.RowCount - 1];
 
             row.ReadOnly = true;
 
-            DataGridViewCellStyle s = new DataGridViewCellStyle();
+            var s = new DataGridViewCellStyle();
             s.Font = new Font(DefaultFont.FontFamily, 10, FontStyle.Bold);
             s.Alignment = DataGridViewContentAlignment.MiddleRight;
             s.BackColor = Color.Gold;//Color.FromArgb(255, 255, 192);
@@ -269,8 +265,8 @@ namespace Portaflex
 
         private void updateStats()
         {
-            DataGridViewRow totalRow = dataGridView1.Rows[dataGridView1.RowCount - 1];
-            for (int i = 2; i < dataGridView1.ColumnCount; i++)
+            var totalRow = dataGridView1.Rows[dataGridView1.RowCount - 1];
+            for (var i = 2; i < dataGridView1.ColumnCount; i++)
             {
                 totalRow.Cells[i].Value = calcColumn(i);
             }
@@ -279,7 +275,7 @@ namespace Portaflex
         private double calcColumn(int col)
         {
             double sum = 0;
-            for (int i = 0; i < dataGridView1.RowCount - 1; i++)
+            for (var i = 0; i < dataGridView1.RowCount - 1; i++)
             {
                 if (!total.Budgets[i].Sum)
                 {

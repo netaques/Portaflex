@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 
@@ -20,7 +16,7 @@ namespace Portaflex
 
         public static Color dimColor(Color c, int level)
         {
-            Color color = Color.FromArgb(c.A, toRGBRange(c.R + level) , toRGBRange(c.G + level), toRGBRange(c.B + level));
+            var color = Color.FromArgb(c.A, toRGBRange(c.R + level) , toRGBRange(c.G + level), toRGBRange(c.B + level));
             return color;
         }
 
@@ -45,18 +41,18 @@ namespace Portaflex
 
         public static void DrawTab(object sender, DrawItemEventArgs e)
         {
-            TabControl tabControl = (TabControl)sender;
-            TabPage CurrentTab = tabControl.TabPages[e.Index];
-            Rectangle ItemRect = tabControl.GetTabRect(e.Index);
-            Color endColor = getIndexColor(e.Index == tabControl.TabCount - 1 ? 0 : e.Index);
-            Color startColor = dimColor(endColor, 50);
-            Image image = tabControl.ImageList.Images[CurrentTab.ImageIndex];
-            LinearGradientBrush FillBrush = new LinearGradientBrush(ItemRect, startColor, endColor, (float) 90);
-            SolidBrush TextBrush = new SolidBrush(Color.Black);
-            StringFormat sf = new StringFormat();
+            var tabControl = (TabControl)sender;
+            var CurrentTab = tabControl.TabPages[e.Index];
+            var ItemRect = tabControl.GetTabRect(e.Index);
+            var endColor = getIndexColor(e.Index == tabControl.TabCount - 1 ? 0 : e.Index);
+            var startColor = dimColor(endColor, 50);
+            var image = tabControl.ImageList.Images[CurrentTab.ImageIndex];
+            var FillBrush = new LinearGradientBrush(ItemRect, startColor, endColor, (float) 90);
+            var TextBrush = new SolidBrush(Color.Black);
+            var sf = new StringFormat();
             sf.Alignment = StringAlignment.Center;
             sf.LineAlignment = StringAlignment.Center;
-            Font font = e.Font;
+            var font = e.Font;
 
             //If we are currently painting the Selected TabItem we'll
             //change the brush colors and inflate the rectangle.
@@ -72,7 +68,7 @@ namespace Portaflex
                 float RotateAngle = 90;
                 if (tabControl.Alignment == TabAlignment.Left)
                     RotateAngle = 270;
-                PointF cp = new PointF(ItemRect.Left + (ItemRect.Width / 2), ItemRect.Top + (ItemRect.Height / 2));
+                var cp = new PointF(ItemRect.Left + (ItemRect.Width / 2), ItemRect.Top + (ItemRect.Height / 2));
                 e.Graphics.TranslateTransform(cp.X, cp.Y);
                 e.Graphics.RotateTransform(RotateAngle);
                 ItemRect = new Rectangle(-(ItemRect.Height / 2), -(ItemRect.Width / 2), ItemRect.Height, ItemRect.Width);
@@ -83,7 +79,7 @@ namespace Portaflex
             //Next we'll paint the TabItem with our Fill Brush
             e.Graphics.FillRectangle(FillBrush, ItemRect);
 
-            Rectangle imageRect = new Rectangle(ItemRect.X, ItemRect.Y, 0, 0);
+            var imageRect = new Rectangle(ItemRect.X, ItemRect.Y, 0, 0);
 
             if (image != null)
             {
@@ -93,7 +89,7 @@ namespace Portaflex
 
             //Now draw the text.
 
-            Rectangle textRectangle = new Rectangle(ItemRect.X + 4 + imageRect.Width, ItemRect.Y, ItemRect.Width - 4 - imageRect.Width, ItemRect.Height);
+            var textRectangle = new Rectangle(ItemRect.X + 4 + imageRect.Width, ItemRect.Y, ItemRect.Width - 4 - imageRect.Width, ItemRect.Height);
             e.Graphics.DrawString(CurrentTab.Text, font, TextBrush, textRectangle, sf);
 
             //Reset any Graphics rotation

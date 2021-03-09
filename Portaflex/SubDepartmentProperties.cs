@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Portaflex.Data;
 
@@ -36,7 +30,7 @@ namespace Portaflex
 
         private void nameLabel_TextChanged(object sender, EventArgs e)
         {
-            bool ok = !(nameTextBox.Text == "");
+            var ok = !(nameTextBox.Text == "");
             OKbutton.Enabled = ok;
             //nameTextBox.BackColor = ok ? Color.White : Color.Tomato;
         }

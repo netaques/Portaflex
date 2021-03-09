@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Portaflex.Data
 {
@@ -37,7 +34,7 @@ namespace Portaflex.Data
             get { return income; }
             set
             {
-                bool oldincome = income;
+                var oldincome = income;
                 income = value;
                 if (oldincome != income)
                     OnChange(new BudgetEventArgs("income", 0));
@@ -49,7 +46,7 @@ namespace Portaflex.Data
             get {return name;}
             set
             {
-                string oldname = name;
+                var oldname = name;
                 name = value;
                 if(oldname != name)
                     OnChange(new BudgetEventArgs("name",0));
@@ -61,7 +58,7 @@ namespace Portaflex.Data
             get {return id;}
             set
             {
-                string oldid = id;
+                var oldid = id;
                 id = value;
                 if(oldid != id)
                     OnChange(new BudgetEventArgs("id",0));

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Portaflex.Data
 {
@@ -20,7 +17,7 @@ namespace Portaflex.Data
             get { return intproc; }
             set
             {
-                decimal oldproc = intproc;
+                var oldproc = intproc;
                 intproc = value;
                 if (oldproc != intproc)
                     OnChange(new DepartmentChangeEventArgs(DepartmentChangeTypes.IntProc));

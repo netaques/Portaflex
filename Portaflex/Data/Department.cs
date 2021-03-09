@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.ComponentModel;
 using System.Xml.Serialization;
 
@@ -17,14 +14,14 @@ namespace Portaflex.Data
             SubDepartments = new BindingList<SubDepartment>();
             Password = "";
             Locked = true;
-            SubDepartments.ListChanged +=new ListChangedEventHandler(Subs_ListChanged);
+            SubDepartments.ListChanged +=Subs_ListChanged;
         }
 
         public Department(Total t)
             : base()
         {
             SubDepartments = new BindingList<SubDepartment>();
-            SubDepartments.ListChanged += new ListChangedEventHandler(Subs_ListChanged);
+            SubDepartments.ListChanged += Subs_ListChanged;
             Parent = t;
             addValues();
             Locked = true;
@@ -42,7 +39,7 @@ namespace Portaflex.Data
                 if (parent != null)
                 {
                     addValues(); 
-                    parent.Budgets.ListChanged += new ListChangedEventHandler(Budgets_ListChanged);
+                    parent.Budgets.ListChanged += Budgets_ListChanged;
                 }
             }
         }
@@ -51,27 +48,25 @@ namespace Portaflex.Data
         {
             if (e.ListChangedType == ListChangedType.ItemAdded)
             {
-                SubDepartment sub = SubDepartments[e.NewIndex];
+                var sub = SubDepartments[e.NewIndex];
                 if (Parent != null)
                 {
-                    int valuesToAdd = Parent.Budgets.Count - sub.Values.Count;
-                    for (int i = 0; i < valuesToAdd; i++)
+                    var valuesToAdd = Parent.Budgets.Count - sub.Values.Count;
+                    for (var i = 0; i < valuesToAdd; i++)
                     {
                         sub.Values.Add(0);
                     }
                 }
-                sub.Values.ListChanged += new ListChangedEventHandler(
-                    delegate(object s, ListChangedEventArgs lcea)
+                sub.Values.ListChanged += delegate(object s, ListChangedEventArgs lcea)
+                {
+                    if (lcea.ListChangedType == ListChangedType.ItemChanged)
                     {
-                        if (lcea.ListChangedType == ListChangedType.ItemChanged)
-                        {
-                            DepartmentChangeEventArgs ea = new DepartmentChangeEventArgs(DepartmentChangeTypes.Value);
-                            ea.AffectedValueIndex = lcea.NewIndex;
-                            //ea.AffectedSub = (SubDepartment)sender;
-                            OnChange(ea);
-                        }
+                        var ea = new DepartmentChangeEventArgs(DepartmentChangeTypes.Value);
+                        ea.AffectedValueIndex = lcea.NewIndex;
+                        //ea.AffectedSub = (SubDepartment)sender;
+                        OnChange(ea);
                     }
-                );
+                };
             }
         }
 
@@ -82,10 +77,10 @@ namespace Portaflex.Data
         {
             if (Parent != null)
             {
-                for (int i = 0; i < Parent.Budgets.Count - Values.Count; i++)
+                for (var i = 0; i < Parent.Budgets.Count - Values.Count; i++)
                 {
                     Values.Add(0);
-                    foreach (SubDepartment sub in SubDepartments)
+                    foreach (var sub in SubDepartments)
                         sub.Values.Add(0);
                 }
                 /*
@@ -102,9 +97,9 @@ namespace Portaflex.Data
         {
             if (e.ListChangedType == ListChangedType.ItemAdded)
             {
-                int index = e.NewIndex;
+                var index = e.NewIndex;
                 Values.Insert(index, 0);
-                foreach (SubDepartment sub in SubDepartments)
+                foreach (var sub in SubDepartments)
                     sub.Values.Insert(index, 0);
                 if (InternalDir != null)
                     InternalDir.Values.Insert(index, 0);
@@ -112,7 +107,7 @@ namespace Portaflex.Data
             else if (e.ListChangedType == ListChangedType.ItemDeleted)
             {
                 Values.RemoveAt(e.NewIndex);
-                foreach (SubDepartment sub in SubDepartments)
+                foreach (var sub in SubDepartments)
                     sub.Values.RemoveAt(e.NewIndex);
                 if (InternalDir != null)
                     InternalDir.Values.RemoveAt(e.NewIndex);
@@ -123,8 +118,8 @@ namespace Portaflex.Data
         {
             if(row < 0)
                 return 0;
-            double sum = Values.Count > row ? Values[row] : 0;
-            foreach (SubDepartment s in SubDepartments)
+            var sum = Values.Count > row ? Values[row] : 0;
+            foreach (var s in SubDepartments)
                 sum += s.Values[row];
             if (InternalDir != null && InternalDir.Values.Count > row)
                 sum += InternalDir.Values[row];
@@ -142,22 +137,19 @@ namespace Portaflex.Data
                     if (dir.Values.Count < parent.Budgets.Count)
                     {
                         dir.Values.Clear();
-                        foreach (Budget b in parent.Budgets)
+                        foreach (var b in parent.Budgets)
                             dir.Values.Add(0);
                     }
-                    dir.Values.ListChanged += new ListChangedEventHandler
-                    (
-                        delegate(object sender, ListChangedEventArgs e)
-                        {
-                            DepartmentChangeEventArgs ea = new DepartmentChangeEventArgs(DepartmentChangeTypes.Value);
-                            ea.AffectedValueIndex = e.NewIndex;
-                            OnChange(ea);
-                        }
-                    );
+                    dir.Values.ListChanged += delegate(object sender, ListChangedEventArgs e)
+                    {
+                        var ea = new DepartmentChangeEventArgs(DepartmentChangeTypes.Value);
+                        ea.AffectedValueIndex = e.NewIndex;
+                        OnChange(ea);
+                    };
                 }
                 else
                 {
-                    DepartmentChangeEventArgs ea = new DepartmentChangeEventArgs(DepartmentChangeTypes.Dir);
+                    var ea = new DepartmentChangeEventArgs(DepartmentChangeTypes.Dir);
                     OnChange(ea);
                 }
                 if (InternalDirChanged != null)

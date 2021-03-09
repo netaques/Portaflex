@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Serialization;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -26,7 +22,7 @@ namespace Portaflex.Data
                     if (dir.Values.Count < Budgets.Count)
                     {
                         dir.Values.Clear();
-                        foreach (Budget b in Budgets)
+                        foreach (var b in Budgets)
                             dir.Values.Add(0);
                     }
                 }
@@ -43,8 +39,8 @@ namespace Portaflex.Data
         {
             Departments = new BindingList<Department>();            
             Budgets = new BindingList<Budget>();
-            Departments.ListChanged += new ListChangedEventHandler(Departments_ListChanged);
-            Budgets.ListChanged += new ListChangedEventHandler(Budgets_ListChanged);
+            Departments.ListChanged += Departments_ListChanged;
+            Budgets.ListChanged += Budgets_ListChanged;
         }
 
         private void Departments_ListChanged(object sender, ListChangedEventArgs e)
@@ -56,8 +52,8 @@ namespace Portaflex.Data
         {
             if (e.ListChangedType == ListChangedType.ItemAdded)
             {
-                Budget b = Budgets[e.NewIndex];
-                b.BudgetChanged += new BudgetChangedHandler(OnBudgetChanged);
+                var b = Budgets[e.NewIndex];
+                b.BudgetChanged += OnBudgetChanged;
                 if (Dir != null && Budgets.Count > Dir.Values.Count)
                     Dir.Values.Insert(e.NewIndex, 0);
             }
@@ -91,7 +87,7 @@ namespace Portaflex.Data
 
         public bool ContainsBudget(string id, string name)
         {
-            foreach (Budget b in Budgets)
+            foreach (var b in Budgets)
             {
                 if (b.ID == id && b.Name == name)
                     return true;                
@@ -101,7 +97,7 @@ namespace Portaflex.Data
 
         public int BudgetIndex(string id, string name)
         {
-            foreach (Budget b in Budgets)
+            foreach (var b in Budgets)
             {
                 if (b.ID == id && b.Name == name)
                     return Budgets.IndexOf(b);
@@ -114,9 +110,9 @@ namespace Portaflex.Data
     {
         public static T DeepClone<T>(this T a)
         {
-            using (MemoryStream stream = new MemoryStream())
+            using (var stream = new MemoryStream())
             {
-                BinaryFormatter formatter = new BinaryFormatter();
+                var formatter = new BinaryFormatter();
                 formatter.Serialize(stream, a);
                 stream.Position = 0;
                 return (T)formatter.Deserialize(stream);
